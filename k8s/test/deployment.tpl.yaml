@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${PROJECT_NAME}-performance
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    app: ${PROJECT_NAME}-performance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${PROJECT_NAME}-performance
+  template:
+    metadata:
+      labels:
+        app: ${PROJECT_NAME}-performance
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-performance
+        image: ${PROJECT_IMAGE}:${PROJECT_TAG}
+        ports:
+        - containerPort: 5001
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: uploads-volume
+          mountPath: /app/uploads
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: uploads-volume
+        persistentVolumeClaim:
+          claimName: qa-third-service 
